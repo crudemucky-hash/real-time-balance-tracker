@@ -168,7 +168,7 @@ function calc() {
   let unpaid = owedPaid ? 0 : OWED;
   AMOUNTS.forEach((_,i) => { if (!document.getElementById('chk-'+i).checked) unpaid += AMOUNTS[i]; });
 
-  const spendable = current - unpaid;
+  const spendable = starting - unpaid;
 
   document.getElementById('owed-card').classList.toggle('paid', owedPaid);
   AMOUNTS.forEach((_,i) => {
