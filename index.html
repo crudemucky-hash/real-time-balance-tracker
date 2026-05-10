@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Balance">
+<title>Balance Tracker</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; background: #f2f2f7; color: #1c1c1e; max-width: 480px; margin: 0 auto; padding: 16px 16px 40px; }
+h1 { font-size: 17px; font-weight: 600; text-align: center; padding: 12px 0 16px; color: #1c1c1e; letter-spacing: -0.3px; }
+.card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+.balance-label { font-size: 12px; color: #8e8e93; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.balance-row { display: flex; align-items: center; gap: 4px; }
+.dollar { font-size: 32px; font-weight: 300; color: #8e8e93; }
+.balance-row input { font-size: 36px; font-weight: 300; border: none; outline: none; background: transparent; color: #1c1c1e; width: 100%; -webkit-appearance: none; }
+.owed-card { background: #fff2f2; border-radius: 16px; padding: 14px 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+.owed-left { flex: 1; }
+.owed-title { font-size: 15px; color: #cc3333; font-weight: 500; }
+.owed-sub { font-size: 12px; color: #cc3333; opacity: 0.7; margin-top: 2px; }
+.owed-right { display: flex; align-items: center; gap: 10px; }
+.owed-amount { font-size: 15px; font-weight: 600; color: #cc3333; }
+.bills-card { background: white; border-radius: 16px; overflow: hidden; margin-bottom: 12px; }
+.bills-title { font-size: 12px; color: #8e8e93; text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 16px 8px; }
+.bill-row { display: flex; align-items: center; padding: 12px 16px; border-top: 0.5px solid #f2f2f7; gap: 12px; transition: opacity 0.2s; }
+.bill-row.paid { opacity: 0.35; }
+.bill-info { flex: 1; }
+.bill-name { font-size: 15px; color: #1c1c1e; }
+.bill-row.paid .bill-name { text-decoration: line-through; color: #8e8e93; }
+.bill-date { font-size: 12px; color: #8e8e93; margin-top: 2px; }
+.bill-amount { font-size: 15px; font-weight: 500; color: #1c1c1e; min-width: 68px; text-align: right; }
+input[type=checkbox] { width: 22px; height: 22px; accent-color: #34c759; cursor: pointer; flex-shrink: 0; }
+.result-card { border-radius: 16px; padding: 20px; margin-bottom: 12px; text-align: center; }
+.result-card.neutral { background: #f2f2f7; }
+.result-card.positive { background: #e8f9ee; }
+.result-card.negative { background: #fff0f0; }
+.result-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.result-card.neutral .result-label { color: #8e8e93; }
+.result-card.positive .result-label { color: #1a7f3c; }
+.result-card.negative .result-label { color: #cc3333; }
+.result-number { font-size: 48px; font-weight: 300; letter-spacing: -1px; }
+.result-card.neutral .result-number { color: #1c1c1e; }
+.result-card.positive .result-number { color: #1a7f3c; }
+.result-card.negative .result-number { color: #cc3333; }
+.result-sub { font-size: 13px; margin-top: 6px; }
+.result-card.neutral .result-sub { color: #8e8e93; }
+.result-card.positive .result-sub { color: #1a7f3c; }
+.result-card.negative .result-sub { color: #cc3333; }
+.reset-btn { display: block; width: 100%; padding: 14px; background: white; border: none; border-radius: 12px; font-size: 15px; color: #8e8e93; cursor: pointer; text-align: center; }
+.reset-btn:active { background: #f2f2f7; }
+.remaining-fixed { font-size: 13px; color: #8e8e93; text-align: center; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<h1>💰 Monthly Balance</h1>
+
+<div class="card">
+  <div class="balance-label">current available balance</div>
+  <div class="balance-row">
+    <span class="dollar">$</span>
+    <input type="number" id="balance" placeholder="0.00" step="0.01" inputmode="decimal" oninput="calc()" />
+  </div>
+</div>
+
+<div class="owed-card">
+  <div class="owed-left">
+    <div class="owed-title">owed — friend (rent loan)</div>
+    <div class="owed-sub">mark paid when repaid</div>
+  </div>
+  <div class="owed-right">
+    <span class="owed-amount">$1,000</span>
+    <input type="checkbox" id="owed-paid" onchange="calc()" />
+  </div>
+</div>
+
+<div class="bills-card">
+  <div class="bills-title">upcoming bills — check off when paid</div>
+
+  <div class="bill-row" id="row-0">
+    <div class="bill-info">
+      <div class="bill-name">Reflect card minimum</div>
+      <div class="bill-date">due ~2nd</div>
+    </div>
+    <span class="bill-amount">$60.00</span>
+    <input type="checkbox" onchange="togglePaid(0);calc()" />
+  </div>
+  <div class="bill-row" id="row-1">
+    <div class="bill-info">
+      <div class="bill-name">Chase card autopay</div>
+      <div class="bill-date">due ~4th</div>
+    </div>
+    <span class="bill-amount">$61.00</span>
+    <input type="checkbox" onchange="togglePaid(1);calc()" />
+  </div>
+  <div class="bill-row" id="row-2">
+    <div class="bill-info">
+      <div class="bill-name">Netflix (Privacy)</div>
+      <div class="bill-date">due ~5th</div>
+    </div>
+    <span class="bill-amount">$8.99</span>
+    <input type="checkbox" onchange="togglePaid(2);calc()" />
+  </div>
+  <div class="bill-row" id="row-3">
+    <div class="bill-info">
+      <div class="bill-name">Quicksilver autopay</div>
+      <div class="bill-date">due ~13th</div>
+    </div>
+    <span class="bill-amount">$57.00</span>
+    <input type="checkbox" onchange="togglePaid(3);calc()" />
+  </div>
+  <div class="bill-row" id="row-4">
+    <div class="bill-info">
+      <div class="bill-name">IRS payment</div>
+      <div class="bill-date">due ~15th</div>
+    </div>
+    <span class="bill-amount">$100.00</span>
+    <input type="checkbox" onchange="togglePaid(4);calc()" />
+  </div>
+  <div class="bill-row" id="row-5">
+    <div class="bill-info">
+      <div class="bill-name">Car insurance (Privacy)</div>
+      <div class="bill-date">due ~16th</div>
+    </div>
+    <span class="bill-amount">$249.74</span>
+    <input type="checkbox" onchange="togglePaid(5);calc()" />
+  </div>
+  <div class="bill-row" id="row-6">
+    <div class="bill-info">
+      <div class="bill-name">Discover minimum</div>
+      <div class="bill-date">due ~16th</div>
+    </div>
+    <span class="bill-amount">$110.00</span>
+    <input type="checkbox" onchange="togglePaid(6);calc()" />
+  </div>
+  <div class="bill-row" id="row-7">
+    <div class="bill-info">
+      <div class="bill-name">Car loan (Toyota)</div>
+      <div class="bill-date">due ~18th</div>
+    </div>
+    <span class="bill-amount">$489.42</span>
+    <input type="checkbox" onchange="togglePaid(7);calc()" />
+  </div>
+  <div class="bill-row" id="row-8">
+    <div class="bill-info">
+      <div class="bill-name">Apple Music (Privacy)</div>
+      <div class="bill-date">due ~19th</div>
+    </div>
+    <span class="bill-amount">$10.99</span>
+    <input type="checkbox" onchange="togglePaid(8);calc()" />
+  </div>
+  <div class="bill-row" id="row-9">
+    <div class="bill-info">
+      <div class="bill-name">iCloud (Privacy)</div>
+      <div class="bill-date">due ~25th</div>
+    </div>
+    <span class="bill-amount">$2.99</span>
+    <input type="checkbox" onchange="togglePaid(9);calc()" />
+  </div>
+  <div class="bill-row" id="row-10">
+    <div class="bill-info">
+      <div class="bill-name">T-Mobile (Privacy)</div>
+      <div class="bill-date">due ~25th</div>
+    </div>
+    <span class="bill-amount">$71.63</span>
+    <input type="checkbox" onchange="togglePaid(10);calc()" />
+  </div>
+  <div class="bill-row" id="row-11">
+    <div class="bill-info">
+      <div class="bill-name">AMC subscription (Privacy)</div>
+      <div class="bill-date">due ~26th</div>
+    </div>
+    <span class="bill-amount">$27.99</span>
+    <input type="checkbox" onchange="togglePaid(11);calc()" />
+  </div>
+  <div class="bill-row" id="row-12">
+    <div class="bill-info">
+      <div class="bill-name">Northwestern Mutual</div>
+      <div class="bill-date">due ~7th</div>
+    </div>
+    <span class="bill-amount">$156.30</span>
+    <input type="checkbox" onchange="togglePaid(12);calc()" />
+  </div>
+</div>
+
+<div class="remaining-fixed" id="remaining-label"></div>
+
+<div class="result-card neutral" id="result-section">
+  <div class="result-label">real spendable money</div>
+  <div class="result-number" id="result-number">—</div>
+  <div class="result-sub" id="result-sub">enter your balance above</div>
+</div>
+
+<button class="reset-btn" onclick="resetAll()">reset for new month</button>
+
+<script>
+const amounts = [60, 61, 8.99, 57, 100, 249.74, 110, 489.42, 10.99, 2.99, 71.63, 27.99, 156.30];
+const owedAmount = 1000;
+
+function togglePaid(i) {
+  document.getElementById('row-' + i).classList.toggle('paid');
+}
+
+function fmt(n) {
+  return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function calc() {
+  const bal = parseFloat(document.getElementById('balance').value) || 0;
+  const owedPaid = document.getElementById('owed-paid').checked;
+  const owed = owedPaid ? 0 : owedAmount;
+
+  let unpaidTotal = 0;
+  amounts.forEach((amt, i) => {
+    if (!document.getElementById('row-' + i).classList.contains('paid')) {
+      unpaidTotal += amt;
+    }
+  });
+
+  const spendable = bal - owed - unpaidTotal;
+  const numEl = document.getElementById('result-number');
+  const sec = document.getElementById('result-section');
+  const sub = document.getElementById('result-sub');
+  const rem = document.getElementById('remaining-label');
+
+  if (bal > 0) {
+    rem.textContent = '$' + fmt(unpaidTotal) + ' in bills still coming' + (owedPaid ? '' : ' + $1,000 owed');
+  } else {
+    rem.textContent = '';
+  }
+
+  numEl.textContent = (spendable < 0 ? '-$' : '$') + fmt(Math.abs(spendable));
+  sec.className = 'result-card ' + (bal === 0 ? 'neutral' : spendable >= 0 ? 'positive' : 'negative');
+
+  const paidCount = amounts.filter((_, i) => document.getElementById('row-' + i).classList.contains('paid')).length;
+  sub.textContent = bal === 0 ? 'enter your balance above'
+    : spendable >= 0 ? (paidCount + ' of ' + amounts.length + ' bills cleared')
+    : 'you need $' + fmt(Math.abs(spendable)) + ' more income';
+}
+
+function resetAll() {
+  amounts.forEach((_, i) => {
+    document.getElementById('row-' + i).classList.remove('paid');
+    document.getElementById('row-' + i).querySelector('input').checked = false;
+  });
+  document.getElementById('owed-paid').checked = false;
+  document.getElementById('balance').value = '';
+  calc();
+}
+</script>
+</body>
+</html>
