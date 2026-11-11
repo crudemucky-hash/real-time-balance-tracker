@@ -90,21 +90,8 @@ input[type=checkbox] { width: 22px; height: 22px; accent-color: #34c759; cursor:
 
 <div class="bills-card">
   <div class="bills-hdr">bills — check off when paid</div>
-  <div class="bill-row" id="row-0"><div class="bill-info"><div class="bill-name">Rent (Zelle to Declan)</div><div class="bill-date">due 1st — hits next WF period</div></div><span class="bill-amt">$1,025.00</span><input type="checkbox" id="chk-0" onchange="calc()" /></div>
-  <div class="bill-row" id="row-1"><div class="bill-info"><div class="bill-name">Reflect card minimum</div><div class="bill-date">due ~2nd</div></div><span class="bill-amt">$60.00</span><input type="checkbox" id="chk-1" onchange="calc()" /></div>
-  <div class="bill-row" id="row-2"><div class="bill-info"><div class="bill-name">Chase card autopay</div><div class="bill-date">due ~4th</div></div><span class="bill-amt">$61.00</span><input type="checkbox" id="chk-2" onchange="calc()" /></div>
-  <div class="bill-row" id="row-3"><div class="bill-info"><div class="bill-name">Netflix (Privacy)</div><div class="bill-date">due ~5th</div></div><span class="bill-amt">$8.99</span><input type="checkbox" id="chk-3" onchange="calc()" /></div>
-  <div class="bill-row" id="row-4"><div class="bill-info"><div class="bill-name">Northwestern Mutual</div><div class="bill-date">due 7th</div></div><span class="bill-amt">$156.30</span><input type="checkbox" id="chk-4" onchange="calc()" /></div>
-  <div class="bill-row" id="row-5"><div class="bill-info"><div class="bill-name">Quicksilver autopay</div><div class="bill-date">due ~13th</div></div><span class="bill-amt">$57.00</span><input type="checkbox" id="chk-5" onchange="calc()" /></div>
-  <div class="bill-row" id="row-6"><div class="bill-info"><div class="bill-name">IRS payment</div><div class="bill-date">due ~15th</div></div><span class="bill-amt">$100.00</span><input type="checkbox" id="chk-6" onchange="calc()" /></div>
-  <div class="bill-row" id="row-7"><div class="bill-info"><div class="bill-name">Car insurance (Privacy)</div><div class="bill-date">due ~16th</div></div><span class="bill-amt">$249.74</span><input type="checkbox" id="chk-7" onchange="calc()" /></div>
-  <div class="bill-row" id="row-8"><div class="bill-info"><div class="bill-name">Discover minimum</div><div class="bill-date">due ~16th</div></div><span class="bill-amt">$110.00</span><input type="checkbox" id="chk-8" onchange="calc()" /></div>
-  <div class="bill-row" id="row-9"><div class="bill-info"><div class="bill-name">Car loan (Toyota)</div><div class="bill-date">due ~18th</div></div><span class="bill-amt">$489.42</span><input type="checkbox" id="chk-9" onchange="calc()" /></div>
-  <div class="bill-row" id="row-10"><div class="bill-info"><div class="bill-name">Apple Music (Privacy)</div><div class="bill-date">due ~19th</div></div><span class="bill-amt">$10.99</span><input type="checkbox" id="chk-10" onchange="calc()" /></div>
-  <div class="bill-row" id="row-11"><div class="bill-info"><div class="bill-name">iCloud (Privacy)</div><div class="bill-date">due ~25th</div></div><span class="bill-amt">$2.99</span><input type="checkbox" id="chk-11" onchange="calc()" /></div>
-  <div class="bill-row" id="row-12"><div class="bill-info"><div class="bill-name">T-Mobile (Privacy)</div><div class="bill-date">due ~25th</div></div><span class="bill-amt">$71.63</span><input type="checkbox" id="chk-12" onchange="calc()" /></div>
-  <div class="bill-row" id="row-13"><div class="bill-info"><div class="bill-name">AMC subscription (Privacy)</div><div class="bill-date">due ~26th</div></div><span class="bill-amt">$27.99</span><input type="checkbox" id="chk-13" onchange="calc()" /></div>
-  <div class="bills-total"><span>Total fixed obligations</span><span>$2,431.05</span></div>
+  <div id="bills-list"></div>
+  <div class="bills-total"><span>Total fixed obligations</span><span id="bills-total"></span></div>
 </div>
 
 <div class="rem-lbl" id="rem-lbl"></div>
@@ -119,101 +106,119 @@ input[type=checkbox] { width: 22px; height: 22px; accent-color: #34c759; cursor:
 <div class="saved-note" id="saved-note"></div>
 
 <script>
-const AMOUNTS = [1025, 60, 61, 8.99, 156.3, 57, 100, 249.74, 110, 489.42, 10.99, 2.99, 71.63, 27.99];
+// ============================================================
+// EDIT YOUR BILLS HERE. Order = order shown on screen.
+// id must be unique and never change once set (keeps checkmarks).
+// Sorted by day of month. Keep names/due text in the same style.
+// To remove a bill, delete its line. To add one, copy a line.
+// ============================================================
+const BILLS = [
+  { id: 'rent',        name: 'Rent (zelle to declan)',          due: 'due ~1st',  amt: 1025.00 },
+  { id: 'reflect',     name: 'Wells Fargo Reflect (autopay min)', due: 'due ~2nd',  amt: 57.00 },
+  { id: 'netflix',     name: 'Netflix (privacy)',               due: 'due ~5th',  amt: 8.99 },
+  { id: 'bofa',        name: 'Bank of America (min)',           due: 'due ~5th',  amt: 65.00 },
+  { id: 'nwmutual',    name: 'Northwestern Mutual',             due: 'due ~7th',  amt: 156.30 },
+  { id: 'quicksilver', name: 'Capital One Quicksilver (autopay min)', due: 'due ~13th', amt: 110.00 },
+  { id: 'aaa',         name: 'AAA Card (autopay min)',          due: 'due ~13th', amt: 30.00 },
+  { id: 'carins',      name: 'State Farm Car Insurance (privacy)', due: 'due ~16th', amt: 237.02 },
+  { id: 'applemusic',  name: 'Apple Music (privacy)',           due: 'due ~19th', amt: 11.99 },
+  { id: 'icloud',      name: 'iCloud (privacy)',                due: 'due ~25th', amt: 2.99 },
+  { id: 'tmobile',     name: 'T-Mobile (privacy)',              due: 'due ~25th', amt: 71.63 }
+];
+
 const KEY = 'sonny_tracker';
+const $ = id => document.getElementById(id);
 
 function fmt(n) {
   return Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 }
 
+function render() {
+  $('bills-list').innerHTML = BILLS.map(b =>
+    '<div class="bill-row" id="row-' + b.id + '"><div class="bill-info"><div class="bill-name">' + b.name +
+    '</div><div class="bill-date">' + b.due + '</div></div><span class="bill-amt">$' + fmt(b.amt) +
+    '</span><input type="checkbox" id="chk-' + b.id + '" onchange="calc()" /></div>'
+  ).join('');
+  $('bills-total').textContent = '$' + fmt(BILLS.reduce((t,b) => t + b.amt, 0));
+}
+
+function isPaid(b) { return $('chk-' + b.id).checked; }
+
 function save() {
-  const state = {
-    starting: document.getElementById('starting').value,
-    bills: AMOUNTS.map((_,i) => document.getElementById('chk-'+i).checked)
-  };
-  localStorage.setItem(KEY, JSON.stringify(state));
-  document.getElementById('saved-note').textContent = 'saved ' + new Date().toLocaleTimeString();
+  const paid = {};
+  BILLS.forEach(b => { paid[b.id] = isPaid(b); });
+  localStorage.setItem(KEY, JSON.stringify({ starting: $('starting').value, paid: paid }));
+  $('saved-note').textContent = 'saved ' + new Date().toLocaleTimeString();
 }
 
 function load() {
   try {
     const state = JSON.parse(localStorage.getItem(KEY));
     if (!state) return;
-    document.getElementById('starting').value = state.starting || '';
-    state.bills.forEach((checked, i) => {
-      document.getElementById('chk-'+i).checked = checked;
-    });
+    $('starting').value = state.starting || '';
+    const paid = state.paid || {};
+    BILLS.forEach(b => { $('chk-' + b.id).checked = !!paid[b.id]; });
   } catch(e) {}
 }
 
 function calc() {
-  const starting = parseFloat(document.getElementById('starting').value) || 0;
+  const starting = parseFloat($('starting').value) || 0;
 
-  let paidTotal = 0;
-  AMOUNTS.forEach((_,i) => { if (document.getElementById('chk-'+i).checked) paidTotal += AMOUNTS[i]; });
+  let paidTotal = 0, unpaid = 0, paidCount = 0;
+  BILLS.forEach(b => {
+    if (isPaid(b)) { paidTotal += b.amt; paidCount++; } else { unpaid += b.amt; }
+  });
 
   const current = starting - paidTotal;
-  document.getElementById('cur-bal').textContent = (current < 0 ? '-$' : '$') + fmt(current);
-
-  let unpaid = 0;
-  AMOUNTS.forEach((_,i) => { if (!document.getElementById('chk-'+i).checked) unpaid += AMOUNTS[i]; });
+  $('cur-bal').textContent = (current < 0 ? '-$' : '$') + fmt(current);
 
   const spendable = current - unpaid;
 
-  AMOUNTS.forEach((_,i) => {
-    const checked = document.getElementById('chk-'+i).checked;
-    document.getElementById('row-'+i).classList.toggle('paid', checked);
-    const nameEl = document.getElementById('row-'+i).querySelector('.bill-name');
-    nameEl.style.textDecoration = checked ? 'line-through' : 'none';
-    nameEl.style.color = checked ? '#8e8e93' : '#1c1c1e';
+  BILLS.forEach(b => {
+    $('row-' + b.id).classList.toggle('paid', isPaid(b));
   });
 
-  const card = document.getElementById('result-card');
-  const numEl = document.getElementById('res-num');
-  const subEl = document.getElementById('res-sub');
-  const remEl = document.getElementById('rem-lbl');
-
-  numEl.textContent = (spendable < 0 ? '-$' : '$') + fmt(spendable);
+  const card = $('result-card');
+  $('res-num').textContent = (spendable < 0 ? '-$' : '$') + fmt(spendable);
   card.className = 'result-card ' + (starting === 0 ? 'neutral' : spendable >= 0 ? 'positive' : 'negative');
 
-  const paidCount = AMOUNTS.filter((_,i) => document.getElementById('chk-'+i).checked).length;
-  remEl.textContent = starting > 0 ? '$' + fmt(unpaid) + ' in obligations still coming' : '';
-  subEl.textContent = starting === 0 ? 'enter your balance above'
-    : spendable >= 0 ? paidCount + ' of ' + AMOUNTS.length + ' bills cleared'
+  $('rem-lbl').textContent = starting > 0 ? '$' + fmt(unpaid) + ' in obligations still coming' : '';
+  $('res-sub').textContent = starting === 0 ? 'enter your balance above'
+    : spendable >= 0 ? paidCount + ' of ' + BILLS.length + ' bills cleared'
     : 'you need $' + fmt(Math.abs(spendable)) + ' more income';
 
   save();
 }
 
 function addIncome() {
-  const amt = parseFloat(document.getElementById('amt-input').value) || 0;
+  const amt = parseFloat($('amt-input').value) || 0;
   if (amt <= 0) return;
-  const cur = parseFloat(document.getElementById('starting').value) || 0;
-  document.getElementById('starting').value = (cur + amt).toFixed(2);
-  document.getElementById('amt-input').value = '';
+  const cur = parseFloat($('starting').value) || 0;
+  $('starting').value = (cur + amt).toFixed(2);
+  $('amt-input').value = '';
   calc();
 }
 
 function addSpend() {
-  const amt = parseFloat(document.getElementById('amt-input').value) || 0;
+  const amt = parseFloat($('amt-input').value) || 0;
   if (amt <= 0) return;
-  const cur = parseFloat(document.getElementById('starting').value) || 0;
-  document.getElementById('starting').value = (cur - amt).toFixed(2);
-  document.getElementById('amt-input').value = '';
+  const cur = parseFloat($('starting').value) || 0;
+  $('starting').value = (cur - amt).toFixed(2);
+  $('amt-input').value = '';
   calc();
 }
 
 function resetAll() {
   if (!confirm('Reset for new month? This will clear everything.')) return;
   localStorage.removeItem(KEY);
-  document.getElementById('starting').value = '';
-  document.getElementById('owed-chk').checked = false;
-  AMOUNTS.forEach((_,i) => { document.getElementById('chk-'+i).checked = false; });
-  document.getElementById('amt-input').value = '';
-  document.getElementById('saved-note').textContent = '';
+  $('starting').value = '';
+  BILLS.forEach(b => { $('chk-' + b.id).checked = false; });
+  $('amt-input').value = '';
+  $('saved-note').textContent = '';
   calc();
 }
 
+render();
 load();
 calc();
 </script>
